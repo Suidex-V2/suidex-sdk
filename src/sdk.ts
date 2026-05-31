@@ -87,6 +87,9 @@ export class SuiDexClient {
       const coin0 = this.#prepareCoin(tx, token0Type, amount0);
       const coin1 = this.#prepareCoin(tx, token1Type, amount1);
       const deadline = BigInt(Math.floor(Date.now() / 1000) + 300);
+      // Contract: add_liquidity(router, factory, pair, coinA, coinB, amountADesired, amountBDesired, amountAMin, amountBMin, token0Name, token1Name, deadline, clock)
+      const token0Name = token0Type.split('::').pop() ?? '';
+      const token1Name = token1Type.split('::').pop() ?? '';
 
       tx.moveCall({
         target: TARGETS.ADD_LIQUIDITY,
@@ -96,8 +99,12 @@ export class SuiDexClient {
           tx.object(V2.FACTORY_ID),
           tx.object(pairId),
           coin0, coin1,
+          tx.pure.u256(amount0),
+          tx.pure.u256(amount1),
           tx.pure.u256(amount0Min),
           tx.pure.u256(amount1Min),
+          tx.pure.string(token0Name),
+          tx.pure.string(token1Name),
           tx.pure.u64(deadline),
           tx.object(V2.CLOCK_ID),
         ],
@@ -114,6 +121,8 @@ export class SuiDexClient {
       const lpType = `${V2.PACKAGE_ID}::pair::LPCoin<${token0Type}, ${token1Type}>`;
       const lpCoin = coinWithBalance({ type: lpType, balance: lpAmount });
       const deadline = BigInt(Math.floor(Date.now() / 1000) + 300);
+      // Contract: remove_liquidity(router, factory, pair, lp_coins:vector, amount_to_burn, amount_a_min, amount_b_min, deadline, clock)
+      const lpVec = tx.makeMoveVec({ elements: [lpCoin] });
 
       tx.moveCall({
         target: TARGETS.REMOVE_LIQUIDITY,
@@ -122,7 +131,8 @@ export class SuiDexClient {
           tx.object(V2.ROUTER_ID),
           tx.object(V2.FACTORY_ID),
           tx.object(pairId),
-          lpCoin,
+          lpVec,
+          tx.pure.u256(lpAmount),
           tx.pure.u256(amount0Min),
           tx.pure.u256(amount1Min),
           tx.pure.u64(deadline),
@@ -139,50 +149,41 @@ export class SuiDexClient {
   // ═══════════════════════════════════════════════════════════════
 
   farm = {
-    /** Build a stake LP tokens transaction. */
+    /**
+     * Build a stake LP tokens transaction.
+     * Contract: stake_lp(farm, vault, lp_tokens:vector, amount:u256, emission_config, clock)
+     */
     stake: (params: FarmStakeParams): Transaction => {
-      const { sender, token0Type, token1Type, lpAmount, existingPositionId } = params;
+      const { sender, token0Type, token1Type, lpAmount } = params;
       const tx = this.#newTx(sender);
 
       const lpType = `${V2.PACKAGE_ID}::pair::LPCoin<${token0Type}, ${token1Type}>`;
       const lpCoin = coinWithBalance({ type: lpType, balance: lpAmount });
+      const lpVec = tx.makeMoveVec({ elements: [lpCoin] });
 
-      if (existingPositionId) {
-        // Add to existing position
-        tx.moveCall({
-          target: `${V2.PACKAGE_ID}::suifarm::add_to_position_lp`,
-          typeArguments: [token0Type, token1Type],
-          arguments: [
-            tx.object(FARM.FARM_ID),
-            tx.object(FARM.REWARD_VAULT_ID),
-            tx.object(FARM.EMISSION_CONTROLLER_ID),
-            tx.object(existingPositionId),
-            lpCoin,
-            tx.object(V2.CLOCK_ID),
-          ],
-        });
-      } else {
-        // Create new staking position
-        tx.moveCall({
-          target: TARGETS.STAKE_LP,
-          typeArguments: [token0Type, token1Type],
-          arguments: [
-            tx.object(FARM.FARM_ID),
-            tx.object(FARM.REWARD_VAULT_ID),
-            tx.object(FARM.EMISSION_CONTROLLER_ID),
-            lpCoin,
-            tx.pure.u64(lpAmount),
-            tx.object(V2.CLOCK_ID),
-          ],
-        });
-      }
+      tx.moveCall({
+        target: TARGETS.STAKE_LP,
+        typeArguments: [token0Type, token1Type],
+        arguments: [
+          tx.object(FARM.FARM_ID),
+          tx.object(FARM.REWARD_VAULT_ID),
+          lpVec,
+          tx.pure.u256(lpAmount),
+          tx.object(FARM.EMISSION_CONTROLLER_ID),
+          tx.object(V2.CLOCK_ID),
+        ],
+      });
 
       return tx;
     },
 
-    /** Build an unstake LP tokens transaction. Returns LP + pending VICTORY. */
-    unstake: (params: FarmUnstakeParams): Transaction => {
-      const { sender, token0Type, token1Type, positionId } = params;
+    /**
+     * Build an unstake LP tokens transaction.
+     * Contract: unstake_lp(farm, vault, position, token_vault, amount:u256, emission_config, clock)
+     * Note: caller must provide the StakedTokenVault ID for this pool.
+     */
+    unstake: (params: FarmUnstakeParams & { vaultId: string; amount: bigint }): Transaction => {
+      const { sender, token0Type, token1Type, positionId, vaultId, amount } = params;
       const tx = this.#newTx(sender);
 
       tx.moveCall({
@@ -191,8 +192,10 @@ export class SuiDexClient {
         arguments: [
           tx.object(FARM.FARM_ID),
           tx.object(FARM.REWARD_VAULT_ID),
-          tx.object(FARM.EMISSION_CONTROLLER_ID),
           tx.object(positionId),
+          tx.object(vaultId),
+          tx.pure.u256(amount),
+          tx.object(FARM.EMISSION_CONTROLLER_ID),
           tx.object(V2.CLOCK_ID),
         ],
       });
@@ -200,7 +203,10 @@ export class SuiDexClient {
       return tx;
     },
 
-    /** Build a claim VICTORY rewards transaction (without unstaking). */
+    /**
+     * Build a claim VICTORY rewards transaction (without unstaking).
+     * Contract: claim_rewards_lp(farm, vault, position, emission_config, clock)
+     */
     claim: (params: FarmClaimParams): Transaction => {
       const { sender, token0Type, token1Type, positionId } = params;
       const tx = this.#newTx(sender);
@@ -211,8 +217,8 @@ export class SuiDexClient {
         arguments: [
           tx.object(FARM.FARM_ID),
           tx.object(FARM.REWARD_VAULT_ID),
-          tx.object(FARM.EMISSION_CONTROLLER_ID),
           tx.object(positionId),
+          tx.object(FARM.EMISSION_CONTROLLER_ID),
           tx.object(V2.CLOCK_ID),
         ],
       });

@@ -176,6 +176,8 @@ function testFarmUnstake() {
     token0Type: TOKENS.SUI,
     token1Type: TOKENS.VICTORY,
     positionId: ZERO,
+    vaultId: ZERO,
+    amount: 1000n,
   });
 
   assert(tx !== null, 'Farm unstake TX created');

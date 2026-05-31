@@ -66,8 +66,8 @@ export const TARGETS = {
   STAKE_SINGLE: `${PKG}::suifarm::stake_single_token`,
   UNSTAKE_LP: `${PKG}::suifarm::unstake_lp`,
   UNSTAKE_SINGLE: `${PKG}::suifarm::unstake_single_token`,
-  CLAIM_FARM_REWARDS: `${PKG}::suifarm::claim_victory_rewards`,
-  CLAIM_FARM_REWARDS_SINGLE: `${PKG}::suifarm::claim_single_rewards`,
+  CLAIM_FARM_REWARDS: `${PKG}::suifarm::claim_rewards_lp`,
+  CLAIM_FARM_REWARDS_SINGLE: `${PKG}::suifarm::claim_rewards_single`,
 
   // Locker (xVICTORY)
   LOCK_VICTORY: `${PKG}::token_locker::lock_tokens`,
