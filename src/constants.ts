@@ -70,10 +70,10 @@ export const TARGETS = {
   CLAIM_FARM_REWARDS_SINGLE: `${PKG}::suifarm::claim_rewards_single`,
 
   // Locker (xVICTORY)
-  LOCK_VICTORY: `${PKG}::token_locker::lock_tokens`,
-  UNLOCK_VICTORY: `${PKG}::token_locker::unlock_tokens`,
-  CLAIM_LOCKER_VICTORY: `${PKG}::token_locker::claim_victory_rewards`,
-  BATCH_CLAIM_EPOCHS: `${PKG}::token_locker::batch_claim_epochs_for_lock`,
+  LOCK_VICTORY: `${PKG}::victory_token_locker::lock_tokens`,
+  UNLOCK_VICTORY: `${PKG}::victory_token_locker::unlock_tokens`,
+  CLAIM_LOCKER_VICTORY: `${PKG}::victory_token_locker::claim_victory_rewards`,
+  BATCH_CLAIM_EPOCHS: `${PKG}::victory_token_locker::batch_claim_epochs_for_lock`,
 } as const;
 
 // ─── Shared Constants ────────────────────────────────────────────

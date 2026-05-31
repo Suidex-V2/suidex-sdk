@@ -58,7 +58,7 @@ export class SuiDexClient {
 
       const inputType = zeroToOne ? token0Type : token1Type;
       const inputCoin = this.#prepareCoin(tx, inputType, amountIn);
-      const deadline = BigInt(Math.floor(Date.now() / 1000) + 300);
+      const deadline = BigInt(Math.floor(Date.now() / 1000) + 3600); // 1 hour — generous for simulations
 
       // V2 entry: swap_exact_tokens(router, factory, pair, coin, desired_amount_in:u256, amount_out_min:u256, deadline:u64, clock)
       tx.moveCall({
@@ -86,7 +86,7 @@ export class SuiDexClient {
 
       const coin0 = this.#prepareCoin(tx, token0Type, amount0);
       const coin1 = this.#prepareCoin(tx, token1Type, amount1);
-      const deadline = BigInt(Math.floor(Date.now() / 1000) + 300);
+      const deadline = BigInt(Math.floor(Date.now() / 1000) + 3600); // 1 hour — generous for simulations
       // Contract: add_liquidity(router, factory, pair, coinA, coinB, amountADesired, amountBDesired, amountAMin, amountBMin, token0Name, token1Name, deadline, clock)
       const token0Name = token0Type.split('::').pop() ?? '';
       const token1Name = token1Type.split('::').pop() ?? '';
@@ -120,7 +120,7 @@ export class SuiDexClient {
 
       const lpType = `${V2.PACKAGE_ID}::pair::LPCoin<${token0Type}, ${token1Type}>`;
       const lpCoin = coinWithBalance({ type: lpType, balance: lpAmount });
-      const deadline = BigInt(Math.floor(Date.now() / 1000) + 300);
+      const deadline = BigInt(Math.floor(Date.now() / 1000) + 3600); // 1 hour — generous for simulations
       // Contract: remove_liquidity(router, factory, pair, lp_coins:vector, amount_to_burn, amount_a_min, amount_b_min, deadline, clock)
       const lpVec = tx.makeMoveVec({ elements: [lpCoin] });
 
