@@ -61,13 +61,13 @@ export const TARGETS = {
   ADD_LIQUIDITY: `${PKG}::router::add_liquidity`,
   REMOVE_LIQUIDITY: `${PKG}::router::remove_liquidity`,
 
-  // Farm
-  STAKE_LP: `${PKG}::suifarm::stake_lp`,
-  STAKE_SINGLE: `${PKG}::suifarm::stake_single_token`,
-  UNSTAKE_LP: `${PKG}::suifarm::unstake_lp`,
-  UNSTAKE_SINGLE: `${PKG}::suifarm::unstake_single_token`,
-  CLAIM_FARM_REWARDS: `${PKG}::suifarm::claim_rewards_lp`,
-  CLAIM_FARM_REWARDS_SINGLE: `${PKG}::suifarm::claim_rewards_single`,
+  // Farm (on-chain module: farm, NOT suifarm)
+  STAKE_LP: `${PKG}::farm::stake_lp`,
+  STAKE_SINGLE: `${PKG}::farm::stake_single`,
+  UNSTAKE_LP: `${PKG}::farm::unstake_lp`,
+  UNSTAKE_SINGLE: `${PKG}::farm::unstake_single`,
+  CLAIM_FARM_REWARDS: `${PKG}::farm::claim_rewards_lp`,
+  CLAIM_FARM_REWARDS_SINGLE: `${PKG}::farm::claim_rewards_single`,
 
   // Locker (xVICTORY)
   LOCK_VICTORY: `${PKG}::victory_token_locker::lock_tokens`,
